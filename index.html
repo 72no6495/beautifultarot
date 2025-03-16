@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タロット占い</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #cardContainer {
+            width: 100px;
+            height: 150px;
+            border: 1px solid black;
+            margin: 20px auto;
+            text-align: center;
+            font-size: 24px;
+            position: relative;
+            background-color: #f0f0f0;
+        }
+        #card {
+            display: none;
+            height: 100%; /* カードの高さをコンテナに合わせる */
+            line-height: normal; /* 通常の行間にして文字を折り返し可能に */
+            padding: 10px; /* 内側に余白を追加 */
+            box-sizing: border-box; /* パディングを含めたサイズ計算 */
+            white-space: normal; /* 文字を折り返す */
+            word-wrap: break-word; /* 長い単語も折り返す */
+        }
+        #orientation {
+            display: none;
+            margin: 10px auto;
+            font-size: 16px;
+        }
+        #shuffleAnimation {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            margin-top: -20px; /* 中央に配置 */
+            margin-left: -20px; /* 中央に配置 */
+            display: none;
+            border: 4px solid #ccc;
+            border-top: 4px solid #333; /* 上部だけ色を変えて回転感を出す */
+            border-radius: 50%;
+            animation: spin 1s linear infinite; /* ぐるぐる回転 */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #descriptionButton {
+            display: none;
+            margin: 10px auto;
+            padding: 5px 10px;
+        }
+        #description {
+            margin-top: 20px;
+            font-size: 16px;
+            text-align: left;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>タロット占い！</h1>
+    <button id="shuffleButton">占う</button>
+    <div id="cardContainer">
+        <div id="shuffleAnimation"></div>
+        <div id="card"></div>
+    </div>
+    <div id="orientation"></div>
+    <button id="descriptionButton">カードの説明を見る</button>
+    <div id="description"></div>
+
+    <script>
+        // 大アルカナ22枚のカードデータ
+        const cards = [
+            { 
+                name: "愚者", 
+                upright: "新たな始まり、冒険、自由", 
+                reversed: "無謀、衝動的、混乱",
+                detail: "「愚者」はタロットの大アルカナの0番目で、旅の始まりを象徴します。無限の可能性と純粋なエネルギーを表し、人生の新たな章への一歩を示唆します。"
+            },
+            { 
+                name: "魔術師", 
+                upright: "創造力、才能、自信", 
+                reversed: "欺瞞、操作、未熟",
+                detail: "「魔術師」は1番目のカードで、意志の力と創造性を象徴します。道具を手に持つ姿は、自分の能力を最大限に活かす準備ができていることを示します。"
+            },
+            { 
+                name: "女教皇", 
+                upright: "直感、秘密、神秘", 
+                reversed: "無知、感情の抑圧、秘密の暴露",
+                detail: "「女教皇」は2番目のカードで、内なる声や直感を重視する姿勢を表します。知恵と神秘性を備え、隠された真実を見抜く力を象徴します。"
+            },
+            { 
+                name: "女帝", 
+                upright: "豊穣、母性、創造", 
+                reversed: "依存、創造性の欠如、過保護",
+                detail: "「女帝」は3番目で、豊かさと育む力を象徴します。自然や生命のサイクルと結びつき、愛情深いサポートを表します。"
+            },
+            { 
+                name: "皇帝", 
+                upright: "権威、安定、構造", 
+                reversed: "支配、頑固、権力の乱用",
+                detail: "「皇帝」は4番目で、秩序と権力を象徴します。安定した基盤を築き、ルールや責任を重んじる姿勢を示します。"
+            },
+            { 
+                name: "教皇", 
+                upright: "伝統、知識、指導", 
+                reversed: "独断、偏見、閉鎖的",
+                detail: "「教皇」は5番目で、精神的な指導者としての役割を表します。伝統や信仰に基づく知恵を授ける存在です。"
+            },
+            { 
+                name: "恋人", 
+                upright: "愛、調和、選択", 
+                reversed: "不調和、選択の困難、裏切り",
+                detail: "「恋人」は6番目で、愛と重要な決断を象徴します。心の結びつきや人生の岐路に立つ瞬間を表します。"
+            },
+            { 
+                name: "戦車", 
+                upright: "意志、勝利、決断", 
+                reversed: "方向性の欠如、敗北、迷い",
+                detail: "「戦車」は7番目で、前進とコントロールを象徴します。強い意志で障害を乗り越える力を示します。"
+            },
+            { 
+                name: "力", 
+                upright: "勇気、忍耐、内なる力", 
+                reversed: "弱さ、恐れ、自己疑念",
+                detail: "「力」は8番目で、内面の強さと優しさを表します。暴力ではなく、穏やかな力で状況を掌握する姿です。"
+            },
+            { 
+                name: "隠者", 
+                upright: "内省、孤独、探求", 
+                reversed: "孤立、孤独、閉鎖的",
+                detail: "「隠者」は9番目で、自己探求と内なる光を象徴します。一人で真実を求める旅を表します。"
+            },
+            { 
+                name: "運命の輪", 
+                upright: "変化、運命、好機", 
+                reversed: "不運、停滞、抵抗",
+                detail: "「運命の輪」は10番目で、人生のサイクルと運命の転換を示します。予期せぬ出来事が訪れることを暗示します。"
+            },
+            { 
+                name: "正義", 
+                upright: "公平、公正、責任", 
+                reversed: "不公平、不正、責任逃れ",
+                detail: "「正義」は11番目で、バランスと真実を象徴します。因果応報や正しい判断が下されることを示します。"
+            },
+            { 
+                name: "吊られた男", 
+                upright: "犠牲、放棄、新たな視点", 
+                reversed: "無駄な犠牲、停滞、自己犠牲",
+                detail: "「吊られた男」は12番目で、視点の変化と犠牲を表します。逆境の中で新しい理解を得る姿です。"
+            },
+            { 
+                name: "死神", 
+                upright: "終わり、変容、新たな始まり", 
+                reversed: "停滞、拒絶、未完",
+                detail: "「死神」は13番目で、終わりと再生を象徴します。古いものを手放し、新たな道へ進む転換点です。"
+            },
+            { 
+                name: "節制", 
+                upright: "調和、バランス、節度", 
+                reversed: "不調和、過剰、バランスの欠如",
+                detail: "「節制」は14番目で、調和と適度さを表します。異なる要素を融合させる能力を示します。"
+            },
+            { 
+                name: "悪魔", 
+                upright: "誘惑、束縛、物質主義", 
+                reversed: "解放、自由、束縛からの脱却",
+                detail: "「悪魔」は15番目で、欲望や依存を象徴します。自分を縛るものに気づくきっかけを与えます。"
+            },
+            { 
+                name: "塔", 
+                upright: "突然の変化、啓示、破壊", 
+                reversed: "恐怖、避けられない変化、混乱",
+                detail: "「塔」は16番目で、突然の変革を表します。偽りの構造が崩れ、真実が明らかになる瞬間です。"
+            },
+            { 
+                name: "星", 
+                upright: "希望、インスピレーション、導き", 
+                reversed: "失望、絶望、導きの欠如",
+                detail: "「星」は17番目で、希望と癒しを象徴します。暗闇の中での光として未来への信頼を示します。"
+            },
+            { 
+                name: "月", 
+                upright: "幻想、直感、不安", 
+                reversed: "混乱、恐怖、誤解",
+                detail: "「月」は18番目で、不確実性と内なる恐怖を表します。直感を頼りに進む必要性を示します。"
+            },
+            { 
+                name: "太陽", 
+                upright: "喜び、成功、活力", 
+                reversed: "一時的な成功、遅延、悲観",
+                detail: "「太陽」は19番目で、純粋な幸福と成功を象徴します。明るいエネルギーが全てを照らします。"
+            },
+            { 
+                name: "審判", 
+                upright: "再生、評価、覚醒", 
+                reversed: "自己疑念、判断の誤り、停滞",
+                detail: "「審判」は20番目で、覚醒と新たな始まりを表します。過去を振り返り、次のステップへ進む時です。"
+            },
+            { 
+                name: "世界", 
+                upright: "完成、達成、調和", 
+                reversed: "未完、遅延、達成感の欠如",
+                detail: "「世界」は21番目で、旅の終わりと完全性を象徴します。全てが調和し、達成感に満ちた状態です。"
+            }
+        ];
+
+        // 要素を取得
+        const shuffleButton = document.getElementById('shuffleButton');
+        const cardContainer = document.getElementById('cardContainer');
+        const shuffleAnimation = document.getElementById('shuffleAnimation');
+        const cardDiv = document.getElementById('card');
+        const orientationDiv = document.getElementById('orientation');
+        const descriptionButton = document.getElementById('descriptionButton');
+        const descriptionDiv = document.getElementById('description');
+
+        // 「占う」ボタンのクリックイベント
+        shuffleButton.addEventListener('click', () => {
+            // 初期化
+            shuffleAnimation.style.display = 'block';
+            cardDiv.style.display = 'none';
+            orientationDiv.style.display = 'none';
+            descriptionButton.style.display = 'none';
+            descriptionDiv.innerHTML = '';
+
+            // シャッフルアニメーション（2秒間）
+            setTimeout(() => {
+                shuffleAnimation.style.display = 'none';
+                const randomIndex = Math.floor(Math.random() * cards.length);
+                const selectedCard = cards[randomIndex];
+                const isUpright = Math.random() < 0.5;
+                const orientation = isUpright ? "正位置" : "逆位置";
+                cardDiv.innerHTML = selectedCard.name;
+                orientationDiv.innerHTML = orientation;
+                cardDiv.style.display = 'block';
+                orientationDiv.style.display = 'block';
+                descriptionButton.style.display = 'block';
+                descriptionButton.dataset.cardIndex = randomIndex;
+                descriptionButton.dataset.isUpright = isUpright;
+            }, 2000);
+        });
+
+        // 「カードの説明を見る」ボタンのクリックイベント
+        descriptionButton.addEventListener('click', () => {
+            const cardIndex = descriptionButton.dataset.cardIndex;
+            const isUpright = descriptionButton.dataset.isUpright === "true";
+            const selectedCard = cards[cardIndex];
+            const meaning = isUpright ? selectedCard.upright : selectedCard.reversed;
+            const description = `
+                <h3>「${selectedCard.name}」 (${isUpright ? "正位置" : "逆位置"})</h3>
+                <p><strong>カードの説明:</strong> ${selectedCard.detail}</p>
+                <p><strong>正位置の意味:</strong> ${selectedCard.upright}</p>
+                <p><strong>逆位置の意味:</strong> ${selectedCard.reversed}</p>
+                <p><strong>今回の結果:</strong> このカードは${isUpright ? "正位置" : "逆位置"}で出ました。${meaning}を意味します。</p>
+            `;
+            descriptionDiv.innerHTML = description;
+        });
+    </script>
+</body>
+</html>
