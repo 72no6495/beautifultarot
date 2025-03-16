@@ -1,0 +1,2 @@
+# beautifultarot
+タロット占いワンオラクル
