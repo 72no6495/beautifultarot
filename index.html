@@ -10,28 +10,22 @@
             font-family: Arial, sans-serif;
         }
         #cardContainer {
+            display: flex; /* 画像と名称を横に並べる */
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+        }
+        #cardImage {
             width: 100px;
             height: 150px;
             border: 1px solid black;
-            margin: 20px auto;
-            text-align: center;
-            font-size: 24px;
-            position: relative;
             background-color: #f0f0f0;
+            display: none; /* 初期状態では非表示 */
         }
-        #card {
-            display: none;
-            height: 100%; /* カードの高さをコンテナに合わせる */
-            line-height: normal; /* 通常の行間にして文字を折り返し可能に */
-            padding: 10px; /* 内側に余白を追加 */
-            box-sizing: border-box; /* パディングを含めたサイズ計算 */
-            white-space: normal; /* 文字を折り返す */
-            word-wrap: break-word; /* 長い単語も折り返す */
-        }
-        #orientation {
-            display: none;
-            margin: 10px auto;
-            font-size: 16px;
+        #cardName {
+            margin-left: 20px; /* 画像と名称の間隔 */
+            font-size: 24px;
+            display: none; /* 初期状態では非表示 */
         }
         #shuffleAnimation {
             position: absolute;
@@ -39,17 +33,22 @@
             left: 50%;
             width: 40px;
             height: 40px;
-            margin-top: -20px; /* 中央に配置 */
-            margin-left: -20px; /* 中央に配置 */
+            margin-top: -20px;
+            margin-left: -20px;
             display: none;
             border: 4px solid #ccc;
-            border-top: 4px solid #333; /* 上部だけ色を変えて回転感を出す */
+            border-top: 4px solid #333;
             border-radius: 50%;
-            animation: spin 1s linear infinite; /* ぐるぐる回転 */
+            animation: spin 1s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        #orientation {
+            display: none;
+            margin: 10px auto;
+            font-size: 16px;
         }
         #descriptionButton {
             display: none;
@@ -71,7 +70,8 @@
     <button id="shuffleButton">占う</button>
     <div id="cardContainer">
         <div id="shuffleAnimation"></div>
-        <div id="card"></div>
+        <img id="cardImage" src="" alt="カード画像">
+        <div id="cardName"></div>
     </div>
     <div id="orientation"></div>
     <button id="descriptionButton">カードの説明を見る</button>
@@ -218,7 +218,8 @@
         const shuffleButton = document.getElementById('shuffleButton');
         const cardContainer = document.getElementById('cardContainer');
         const shuffleAnimation = document.getElementById('shuffleAnimation');
-        const cardDiv = document.getElementById('card');
+        const cardImage = document.getElementById('cardImage');
+        const cardNameDiv = document.getElementById('cardName');
         const orientationDiv = document.getElementById('orientation');
         const descriptionButton = document.getElementById('descriptionButton');
         const descriptionDiv = document.getElementById('description');
@@ -227,7 +228,8 @@
         shuffleButton.addEventListener('click', () => {
             // 初期化
             shuffleAnimation.style.display = 'block';
-            cardDiv.style.display = 'none';
+            cardImage.style.display = 'none';
+            cardNameDiv.style.display = 'none';
             orientationDiv.style.display = 'none';
             descriptionButton.style.display = 'none';
             descriptionDiv.innerHTML = '';
@@ -239,9 +241,18 @@
                 const selectedCard = cards[randomIndex];
                 const isUpright = Math.random() < 0.5;
                 const orientation = isUpright ? "正位置" : "逆位置";
-                cardDiv.innerHTML = selectedCard.name;
+
+                // カード画像を設定
+                cardImage.src = `${selectedCard.name}.jpg`;
+                cardImage.style.transform = isUpright ? 'rotate(0deg)' : 'rotate(180deg)';
+                cardImage.style.display = 'block';
+
+                // カード名称を設定
+                cardNameDiv.innerHTML = selectedCard.name;
+                cardNameDiv.style.display = 'block';
+
+                // 向きと説明ボタンを表示
                 orientationDiv.innerHTML = orientation;
-                cardDiv.style.display = 'block';
                 orientationDiv.style.display = 'block';
                 descriptionButton.style.display = 'block';
                 descriptionButton.dataset.cardIndex = randomIndex;
